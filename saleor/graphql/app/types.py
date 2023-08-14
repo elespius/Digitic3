@@ -4,12 +4,12 @@ from typing import List, Optional, Type, Union
 import graphene
 
 from ...app import models
-from ...app.types import AppExtensionTarget
+from ...app.installation_utils import fetch_brand_data
 from ...core.exceptions import PermissionDenied
 from ...core.jwt import JWT_THIRDPARTY_ACCESS_TYPE
 from ...core.utils import build_absolute_uri
 from ...permission.auth_filters import AuthorizationFilters
-from ...permission.enums import AppPermission
+from ...permission.enums import AppPermission, get_permissions_from_names
 from ...permission.utils import message_one_of_permissions_required
 from ...thumbnail import PIL_IDENTIFIER_TO_MIME_TYPE
 from ...thumbnail.utils import (
@@ -65,6 +65,7 @@ from .resolvers import (
 
 # Maximal thumbnail size for manifest preview
 MANIFEST_THUMBNAIL_MAX_SIZE = 512
+FETCH_BRAND_DATA_TIMEOUT = 5
 
 
 def has_required_permission(app: models.App, context: SaleorContext):
@@ -122,13 +123,22 @@ class AppManifestExtension(BaseObjectType):
         doc_category = DOC_CATEGORY_APPS
 
     @staticmethod
-    def resolve_target(root, _info: ResolveInfo):
-        return root.get("target") or AppExtensionTarget.POPUP
+    def resolve_permissions(root, _info: ResolveInfo):
+        permissions = get_permissions_from_names([p.value for p in root.permissions])
+        return format_permissions_for_display(permissions)
 
     @staticmethod
     def resolve_url(root, _info: ResolveInfo):
         """Return an extension URL."""
         return resolve_app_extension_url(root)
+
+    @staticmethod
+    def resolve_mount(root, _info: ResolveInfo):
+        return root.mount.name
+
+    @staticmethod
+    def resolve_target(root, _info: ResolveInfo):
+        return root.target.name
 
 
 class AppExtension(AppManifestExtension, ModelObjectType[models.AppExtension]):
@@ -163,6 +173,10 @@ class AppExtension(AppManifestExtension, ModelObjectType[models.AppExtension]):
     @staticmethod
     def resolve_target(root, _info: ResolveInfo):
         return root.target
+
+    @staticmethod
+    def resolve_mount(root, _info: ResolveInfo):
+        return root.mount
 
     @staticmethod
     @app_promise_callback
@@ -457,10 +471,13 @@ class Manifest(BaseObjectType):
         doc_category = DOC_CATEGORY_APPS
 
     @staticmethod
-    def resolve_extensions(root, _info: ResolveInfo):
-        for extension in root.extensions:
-            extension["app_url"] = root.app_url
-        return root.extensions
+    def resolve_permissions(root, _info: ResolveInfo):
+        permissions = get_permissions_from_names([p.value for p in root.permissions])
+        return format_permissions_for_display(permissions)
+
+    @staticmethod
+    def resolve_brand(root, _info: ResolveInfo):
+        return fetch_brand_data(root, timeout=FETCH_BRAND_DATA_TIMEOUT)
 
 
 class AppToken(BaseObjectType):

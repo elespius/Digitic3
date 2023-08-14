@@ -1,0 +1,583 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Permission": {
+      "title": "Permission",
+      "description": "An enumeration.",
+      "enum": [
+        "MANAGE_USERS",
+        "MANAGE_STAFF",
+        "IMPERSONATE_USER",
+        "MANAGE_APPS",
+        "MANAGE_OBSERVABILITY",
+        "MANAGE_CHECKOUTS",
+        "HANDLE_CHECKOUTS",
+        "HANDLE_TAXES",
+        "MANAGE_TAXES",
+        "MANAGE_CHANNELS",
+        "MANAGE_DISCOUNTS",
+        "MANAGE_GIFT_CARD",
+        "MANAGE_MENUS",
+        "MANAGE_ORDERS",
+        "MANAGE_ORDERS_IMPORT",
+        "MANAGE_PAGES",
+        "MANAGE_PAGE_TYPES_AND_ATTRIBUTES",
+        "HANDLE_PAYMENTS",
+        "MANAGE_PLUGINS",
+        "MANAGE_PRODUCTS",
+        "MANAGE_PRODUCT_TYPES_AND_ATTRIBUTES",
+        "MANAGE_SHIPPING",
+        "MANAGE_SETTINGS",
+        "MANAGE_TRANSLATIONS"
+      ]
+    },
+    "WebhookEventTypeAsyncEnum": {
+      "title": "WebhookEventTypeAsyncEnum",
+      "description": "The asynchronous events that webhook wants to subscribe.",
+      "enum": [
+        "ANY_EVENTS",
+        "ACCOUNT_CONFIRMATION_REQUESTED",
+        "ACCOUNT_CHANGE_EMAIL_REQUESTED",
+        "ACCOUNT_CONFIRMED",
+        "ACCOUNT_DELETE_REQUESTED",
+        "ACCOUNT_DELETED",
+        "ADDRESS_CREATED",
+        "ADDRESS_UPDATED",
+        "ADDRESS_DELETED",
+        "APP_INSTALLED",
+        "APP_UPDATED",
+        "APP_DELETED",
+        "APP_STATUS_CHANGED",
+        "ATTRIBUTE_CREATED",
+        "ATTRIBUTE_UPDATED",
+        "ATTRIBUTE_DELETED",
+        "ATTRIBUTE_VALUE_CREATED",
+        "ATTRIBUTE_VALUE_UPDATED",
+        "ATTRIBUTE_VALUE_DELETED",
+        "CATEGORY_CREATED",
+        "CATEGORY_UPDATED",
+        "CATEGORY_DELETED",
+        "CHANNEL_CREATED",
+        "CHANNEL_UPDATED",
+        "CHANNEL_DELETED",
+        "CHANNEL_STATUS_CHANGED",
+        "CHANNEL_METADATA_UPDATED",
+        "GIFT_CARD_CREATED",
+        "GIFT_CARD_UPDATED",
+        "GIFT_CARD_DELETED",
+        "GIFT_CARD_SENT",
+        "GIFT_CARD_STATUS_CHANGED",
+        "GIFT_CARD_METADATA_UPDATED",
+        "MENU_CREATED",
+        "MENU_UPDATED",
+        "MENU_DELETED",
+        "MENU_ITEM_CREATED",
+        "MENU_ITEM_UPDATED",
+        "MENU_ITEM_DELETED",
+        "ORDER_CREATED",
+        "ORDER_CONFIRMED",
+        "ORDER_PAID",
+        "ORDER_FULLY_PAID",
+        "ORDER_REFUNDED",
+        "ORDER_FULLY_REFUNDED",
+        "ORDER_UPDATED",
+        "ORDER_CANCELLED",
+        "ORDER_EXPIRED",
+        "ORDER_FULFILLED",
+        "ORDER_METADATA_UPDATED",
+        "ORDER_BULK_CREATED",
+        "FULFILLMENT_CREATED",
+        "FULFILLMENT_CANCELED",
+        "FULFILLMENT_APPROVED",
+        "FULFILLMENT_METADATA_UPDATED",
+        "DRAFT_ORDER_CREATED",
+        "DRAFT_ORDER_UPDATED",
+        "DRAFT_ORDER_DELETED",
+        "SALE_CREATED",
+        "SALE_UPDATED",
+        "SALE_DELETED",
+        "SALE_TOGGLE",
+        "INVOICE_REQUESTED",
+        "INVOICE_DELETED",
+        "INVOICE_SENT",
+        "CUSTOMER_CREATED",
+        "CUSTOMER_UPDATED",
+        "CUSTOMER_DELETED",
+        "CUSTOMER_METADATA_UPDATED",
+        "COLLECTION_CREATED",
+        "COLLECTION_UPDATED",
+        "COLLECTION_DELETED",
+        "COLLECTION_METADATA_UPDATED",
+        "PRODUCT_CREATED",
+        "PRODUCT_UPDATED",
+        "PRODUCT_DELETED",
+        "PRODUCT_METADATA_UPDATED",
+        "PRODUCT_MEDIA_CREATED",
+        "PRODUCT_MEDIA_UPDATED",
+        "PRODUCT_MEDIA_DELETED",
+        "PRODUCT_VARIANT_CREATED",
+        "PRODUCT_VARIANT_UPDATED",
+        "PRODUCT_VARIANT_DELETED",
+        "PRODUCT_VARIANT_METADATA_UPDATED",
+        "PRODUCT_VARIANT_OUT_OF_STOCK",
+        "PRODUCT_VARIANT_BACK_IN_STOCK",
+        "PRODUCT_VARIANT_STOCK_UPDATED",
+        "CHECKOUT_CREATED",
+        "CHECKOUT_UPDATED",
+        "CHECKOUT_FULLY_PAID",
+        "CHECKOUT_METADATA_UPDATED",
+        "NOTIFY_USER",
+        "PAGE_CREATED",
+        "PAGE_UPDATED",
+        "PAGE_DELETED",
+        "PAGE_TYPE_CREATED",
+        "PAGE_TYPE_UPDATED",
+        "PAGE_TYPE_DELETED",
+        "PERMISSION_GROUP_CREATED",
+        "PERMISSION_GROUP_UPDATED",
+        "PERMISSION_GROUP_DELETED",
+        "SHIPPING_PRICE_CREATED",
+        "SHIPPING_PRICE_UPDATED",
+        "SHIPPING_PRICE_DELETED",
+        "SHIPPING_ZONE_CREATED",
+        "SHIPPING_ZONE_UPDATED",
+        "SHIPPING_ZONE_DELETED",
+        "SHIPPING_ZONE_METADATA_UPDATED",
+        "STAFF_CREATED",
+        "STAFF_UPDATED",
+        "STAFF_DELETED",
+        "TRANSACTION_ITEM_METADATA_UPDATED",
+        "TRANSLATION_CREATED",
+        "TRANSLATION_UPDATED",
+        "WAREHOUSE_CREATED",
+        "WAREHOUSE_UPDATED",
+        "WAREHOUSE_DELETED",
+        "WAREHOUSE_METADATA_UPDATED",
+        "VOUCHER_CREATED",
+        "VOUCHER_UPDATED",
+        "VOUCHER_DELETED",
+        "VOUCHER_METADATA_UPDATED",
+        "OBSERVABILITY",
+        "THUMBNAIL_CREATED",
+        "SHOP_METADATA_UPDATED"
+      ]
+    },
+    "WebhookEventTypeSyncEnum": {
+      "title": "WebhookEventTypeSyncEnum",
+      "description": "The synchronous events that webhook wants to subscribe.",
+      "enum": [
+        "PAYMENT_LIST_GATEWAYS",
+        "PAYMENT_AUTHORIZE",
+        "PAYMENT_CAPTURE",
+        "PAYMENT_REFUND",
+        "PAYMENT_VOID",
+        "PAYMENT_CONFIRM",
+        "PAYMENT_PROCESS",
+        "CHECKOUT_CALCULATE_TAXES",
+        "ORDER_CALCULATE_TAXES",
+        "TRANSACTION_CHARGE_REQUESTED",
+        "TRANSACTION_REFUND_REQUESTED",
+        "TRANSACTION_CANCELATION_REQUESTED",
+        "SHIPPING_LIST_METHODS_FOR_CHECKOUT",
+        "CHECKOUT_FILTER_SHIPPING_METHODS",
+        "ORDER_FILTER_SHIPPING_METHODS",
+        "PAYMENT_GATEWAY_INITIALIZE_SESSION",
+        "TRANSACTION_INITIALIZE_SESSION",
+        "TRANSACTION_PROCESS_SESSION"
+      ]
+    },
+    "Webhook": {
+      "title": "Webhook",
+      "type": "object",
+      "properties": {
+        "name": {
+          "maxLength": 255,
+          "type": "string"
+        },
+        "isActive": {
+          "default": true,
+          "type": "boolean"
+        },
+        "targetUrl": {
+          "minLength": 1,
+          "maxLength": 255,
+          "format": "uri",
+          "type": "string"
+        },
+        "query": {
+          "type": "string"
+        },
+        "asyncEvents": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookEventTypeAsyncEnum"
+          }
+        },
+        "syncEvents": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/WebhookEventTypeSyncEnum"
+          }
+        },
+        "customHeaders": {
+          "default": {},
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "targetUrl",
+        "query"
+      ]
+    },
+    "AppExtensionTargetEnum": {
+      "title": "AppExtensionTargetEnum",
+      "description": "All available ways of opening an app extension.\n\nPOPUP - app's extension will be mounted as a popup window\nAPP_PAGE - redirect to app's page",
+      "enum": [
+        "POPUP",
+        "APP_PAGE"
+      ]
+    },
+    "AppExtensionMountEnum": {
+      "title": "AppExtensionMountEnum",
+      "description": "All places where app extension can be mounted.",
+      "enum": [
+        "CUSTOMER_OVERVIEW_CREATE",
+        "CUSTOMER_OVERVIEW_MORE_ACTIONS",
+        "CUSTOMER_DETAILS_MORE_ACTIONS",
+        "PRODUCT_OVERVIEW_CREATE",
+        "PRODUCT_OVERVIEW_MORE_ACTIONS",
+        "PRODUCT_DETAILS_MORE_ACTIONS",
+        "NAVIGATION_CATALOG",
+        "NAVIGATION_ORDERS",
+        "NAVIGATION_CUSTOMERS",
+        "NAVIGATION_DISCOUNTS",
+        "NAVIGATION_TRANSLATIONS",
+        "NAVIGATION_PAGES",
+        "ORDER_DETAILS_MORE_ACTIONS",
+        "ORDER_OVERVIEW_CREATE",
+        "ORDER_OVERVIEW_MORE_ACTIONS"
+      ]
+    },
+    "Extension": {
+      "title": "Extension",
+      "type": "object",
+      "properties": {
+        "label": {
+          "maxLength": 256,
+          "type": "string"
+        },
+        "target": {
+          "default": "POPUP",
+          "allOf": [
+            {
+              "$ref": "#/definitions/AppExtensionTargetEnum"
+            }
+          ]
+        },
+        "mount": {
+          "$ref": "#/definitions/AppExtensionMountEnum"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "format": "uri"
+            },
+            {
+              "type": "string",
+              "pattern": "(/[^\\s?#]*)(\\?[^\\s#]*)?(#[^\\s#]*)?"
+            }
+          ]
+        },
+        "permissions": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        }
+      },
+      "required": [
+        "label",
+        "mount",
+        "url"
+      ]
+    },
+    "ManifestBrandLogo": {
+      "title": "ManifestBrandLogo",
+      "type": "object",
+      "properties": {
+        "default": {
+          "minLength": 1,
+          "maxLength": 200,
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "default"
+      ]
+    },
+    "ManifestBrandData": {
+      "title": "ManifestBrandData",
+      "type": "object",
+      "properties": {
+        "logo": {
+          "$ref": "#/definitions/ManifestBrandLogo"
+        }
+      },
+      "required": [
+        "logo"
+      ]
+    },
+    "Manifest": {
+      "title": "Manifest",
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Id of application used internally by Saleor",
+          "maxLength": 256,
+          "type": "string"
+        },
+        "version": {
+          "description": "App version",
+          "maxLength": 60,
+          "type": "string"
+        },
+        "name": {
+          "description": "App name displayed in the dashboard",
+          "maxLength": 60,
+          "type": "string"
+        },
+        "tokenTargetUrl": {
+          "description": "Endpoint used during process of app installation",
+          "minLength": 1,
+          "maxLength": 200,
+          "format": "uri",
+          "type": "string"
+        },
+        "about": {
+          "description": "Description of the app displayed in the dashboard",
+          "type": "string"
+        },
+        "requiredSaleorVersion": {
+          "description": "Version range, in the semver format, which specifies Saleor version required by the app. The field will be respected starting from Saleor 3.13",
+          "type": "string"
+        },
+        "author": {
+          "description": "App author name displayed in the dashboard (starting from Saleor 3.13)",
+          "minLength": 1,
+          "maxLength": 60,
+          "type": "string"
+        },
+        "appUrl": {
+          "description": "App website rendered in the dashboard",
+          "minLength": 1,
+          "maxLength": 200,
+          "format": "uri",
+          "type": "string"
+        },
+        "configurationUrl": {
+          "description": "Address to the app configuration page, which is rendered in the dashboard (deprecated in Saleor 3.5, use appUrl instead)",
+          "deprecated": true,
+          "minLength": 1,
+          "maxLength": 200,
+          "format": "uri",
+          "type": "string"
+        },
+        "dataPrivacy": {
+          "description": "Short description of privacy policy displayed in the dashboard (deprecated in Saleor 3.5, use dataPrivacyUrl instead)",
+          "deprecated": true,
+          "type": "string"
+        },
+        "dataPrivacyUrl": {
+          "description": "URL to the full privacy policy",
+          "minLength": 1,
+          "maxLength": 200,
+          "format": "uri",
+          "type": "string"
+        },
+        "homepageUrl": {
+          "description": "External URL to the app homepage",
+          "minLength": 1,
+          "maxLength": 200,
+          "format": "uri",
+          "type": "string"
+        },
+        "supportUrl": {
+          "description": "External URL to the page where app users can find support",
+          "minLength": 1,
+          "maxLength": 200,
+          "format": "uri",
+          "type": "string"
+        },
+        "audience": {
+          "maxLength": 256,
+          "type": "string"
+        },
+        "permissions": {
+          "description": "Array of permissions requested by the app",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Permission"
+          }
+        },
+        "webhooks": {
+          "description": "List of webhooks that will be set",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Webhook"
+          }
+        },
+        "extensions": {
+          "description": "List of extensions that will be mounted in Saleor's dashboard",
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Extension"
+          }
+        },
+        "brand": {
+          "$ref": "#/definitions/ManifestBrandData"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "name",
+        "tokenTargetUrl"
+      ]
+    },
+    "TaxLineData": {
+      "title": "TaxLineData",
+      "type": "object",
+      "properties": {
+        "tax_rate": {
+          "description": "Tax rate value provided as percentage. Example: provide 23 to represent the 23% tax rate.",
+          "type": "number"
+        },
+        "total_gross_amount": {
+          "description": "Gross price of the line.",
+          "type": "number"
+        },
+        "total_net_amount": {
+          "description": "Net price of the line.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "tax_rate",
+        "total_gross_amount",
+        "total_net_amount"
+      ]
+    },
+    "CheckoutCalculateTaxes": {
+      "title": "CHECKOUT_CALCULATE_TAXES",
+      "description": "Response from webhook with calculated checkout taxes.\n\nAdded in Saleor 3.7.",
+      "type": "object",
+      "properties": {
+        "shipping_tax_rate": {
+          "description": "Tax rate of shipping.",
+          "type": "number"
+        },
+        "shipping_price_gross_amount": {
+          "description": "The gross price of shipping.",
+          "type": "number"
+        },
+        "shipping_price_net_amount": {
+          "description": "Net price of shipping.",
+          "type": "number"
+        },
+        "lines": {
+          "description": "List of lines tax assigned to checkout. Lines should be returned in the same order in which they were sent to the App.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TaxLineData"
+          }
+        }
+      },
+      "required": [
+        "shipping_tax_rate",
+        "shipping_price_gross_amount",
+        "shipping_price_net_amount",
+        "lines"
+      ]
+    },
+    "OrderCalculateTaxes": {
+      "title": "ORDER_CALCULATE_TAXES",
+      "description": "Response from webhook with calculated order taxes.\n\nAdded in Saleor 3.7.",
+      "type": "object",
+      "properties": {
+        "shipping_tax_rate": {
+          "description": "Tax rate of shipping.",
+          "type": "number"
+        },
+        "shipping_price_gross_amount": {
+          "description": "The gross price of shipping.",
+          "type": "number"
+        },
+        "shipping_price_net_amount": {
+          "description": "Net price of shipping.",
+          "type": "number"
+        },
+        "lines": {
+          "description": "List of lines tax assigned to checkout. Lines should be returned in the same order in which they were sent to the App.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TaxLineData"
+          }
+        }
+      },
+      "required": [
+        "shipping_tax_rate",
+        "shipping_price_gross_amount",
+        "shipping_price_net_amount",
+        "lines"
+      ]
+    },
+    "ShippingMethodSchema": {
+      "title": "ShippingMethodSchema",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "maximum_delivery_days": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "amount",
+        "currency"
+      ]
+    },
+    "ShippingListMethodsForCheckout": {
+      "title": "SHIPPING_LIST_METHODS_FOR_CHECKOUT",
+      "description": "Response from webhook with shipping methods that can be used with checkout.\n\nAdded in Saleor 3.6.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ShippingMethodSchema"
+      }
+    }
+  }
+}

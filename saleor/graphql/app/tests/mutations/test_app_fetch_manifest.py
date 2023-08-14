@@ -1,4 +1,5 @@
 import base64
+import json
 from io import BytesIO
 from unittest.mock import ANY, Mock
 
@@ -11,7 +12,7 @@ from .....app.error_codes import AppErrorCode
 from .....thumbnail import IconThumbnailFormat
 from ....tests.utils import assert_no_permission, get_graphql_content
 from ...enums import AppExtensionMountEnum, AppExtensionTargetEnum
-from ...mutations.app_fetch_manifest import FETCH_BRAND_DATA_TIMEOUT
+from ...types import FETCH_BRAND_DATA_TIMEOUT
 
 APP_FETCH_MANIFEST_MUTATION = """
 mutation AppFetchManifest(
@@ -181,8 +182,8 @@ def test_app_fetch_manifest_incorrect_permission_in_manifest(
     manifest = content["data"]["appFetchManifest"]["manifest"]
     assert len(errors) == 1
     assert errors[0] == {
-        "field": "permissions",
-        "message": "Given permissions don't exist.",
+        "field": "permissions.0",
+        "message": "Given permission doesn't exist.",
         "code": "INVALID_PERMISSION",
     }
     assert not manifest
@@ -309,7 +310,7 @@ def test_app_fetch_manifest_missing_fields(
     # given
     del app_manifest[missing_field]
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     query = APP_FETCH_MANIFEST_MUTATION
@@ -357,7 +358,7 @@ def test_app_fetch_manifest_missing_extension_fields(
     ]
     del app_manifest["extensions"][0][missing_field]
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     query = APP_FETCH_MANIFEST_MUTATION
@@ -378,8 +379,8 @@ def test_app_fetch_manifest_missing_extension_fields(
     assert len(errors) == 1
     assert errors[0] == {
         "code": "REQUIRED",
-        "field": "extensions",
-        "message": f"Missing required fields for app extension: {missing_field}.",
+        "field": f"extensions.0.{missing_field}",
+        "message": "Field required.",
     }
 
 
@@ -402,7 +403,7 @@ def test_app_fetch_manifest_extensions_incorrect_enum_values(
     app_manifest["extensions"][0][incorrect_field] = "INCORRECT_VALUE"
 
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     query = APP_FETCH_MANIFEST_MUTATION
@@ -421,21 +422,14 @@ def test_app_fetch_manifest_extensions_incorrect_enum_values(
     errors = content["data"]["appFetchManifest"]["errors"]
 
     assert len(errors) == 1
-    expected_errors = [
-        {
-            "code": "INVALID",
-            "field": "extensions",
-            "message": f"Incorrect value for field: {incorrect_field}",
-        },
-    ]
-
-    assert errors == expected_errors
+    assert errors[0]["code"] == "INVALID"
+    assert errors[0]["field"] == f"extensions.0.{incorrect_field}"
 
 
 @pytest.mark.parametrize(
     "url, target, app_url",
     [
-        ("/app", AppExtensionTargetEnum.APP_PAGE.name, ""),
+        ("/app", AppExtensionTargetEnum.APP_PAGE.name, None),
         ("/app", AppExtensionTargetEnum.APP_PAGE.name, "https://www.example.com/app"),
         ("/app", AppExtensionTargetEnum.POPUP.name, "https://www.example.com/app"),
     ],
@@ -462,7 +456,7 @@ def test_app_fetch_manifest_extensions_correct_url(
     ]
 
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     query = APP_FETCH_MANIFEST_MUTATION
@@ -509,7 +503,7 @@ def test_app_fetch_manifest_extensions_incorrect_url(
     ]
 
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     query = APP_FETCH_MANIFEST_MUTATION
@@ -527,12 +521,10 @@ def test_app_fetch_manifest_extensions_incorrect_url(
     content = get_graphql_content(response)
     errors = content["data"]["appFetchManifest"]["errors"]
 
-    assert len(errors) == 1
-    assert errors[0] == {
-        "code": "INVALID_URL_FORMAT",
-        "field": "extensions",
-        "message": "Incorrect value for field: url.",
-    }
+    assert len(errors) >= 1
+    for error in errors:
+        assert error["field"] in ["extensions.0", "extensions.0.url"]
+        assert error["code"] == "INVALID_URL_FORMAT"
 
 
 @pytest.mark.parametrize(
@@ -562,7 +554,7 @@ def test_app_fetch_manifest_extensions_permission_out_of_scope(
     ]
 
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     query = APP_FETCH_MANIFEST_MUTATION
@@ -583,7 +575,7 @@ def test_app_fetch_manifest_extensions_permission_out_of_scope(
     assert len(errors) == 1
     assert errors[0] == {
         "code": "OUT_OF_SCOPE_PERMISSION",
-        "field": "extensions",
+        "field": "extensions.0",
         "message": "Extension permission must be listed in App's permissions.",
     }
 
@@ -603,7 +595,7 @@ def test_app_fetch_manifest_extensions_invalid_permission(
     ]
 
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     query = APP_FETCH_MANIFEST_MUTATION
@@ -624,8 +616,8 @@ def test_app_fetch_manifest_extensions_invalid_permission(
     assert len(errors) == 1
     assert errors[0] == {
         "code": "INVALID_PERMISSION",
-        "field": "extensions",
-        "message": "Given permissions don't exist.",
+        "field": "extensions.0.permissions.0",
+        "message": "Given permission doesn't exist.",
     }
 
 
@@ -645,7 +637,7 @@ def test_app_fetch_manifest_with_extensions(
     ]
 
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
 
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
 
@@ -685,7 +677,7 @@ def test_app_fetch_manifest_with_required_saleor_version(
     required_saleor_version = "<3.11"
     app_manifest["requiredSaleorVersion"] = required_saleor_version
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
 
     # when
@@ -712,7 +704,7 @@ def test_app_fetch_manifest_with_invalid_required_saleor_version(
     required_saleor_version = "3.wrong.1"
     app_manifest["requiredSaleorVersion"] = required_saleor_version
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
 
     # when
@@ -736,7 +728,7 @@ def test_app_fetch_manifest_with_author(
     # given
     app_manifest["author"] = "Acme Ltd"
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
 
     # when
@@ -759,7 +751,7 @@ def test_app_fetch_manifest_with_empty_author(
     # given
     app_manifest["author"] = " "
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
 
     # when
@@ -799,7 +791,7 @@ def test_app_fetch_manifest_with_brand_data(
     logo_url = "http://localhost:3000/logo.png"
     app_manifest["brand"] = {"logo": {"default": logo_url}}
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
     mock_fetch_icon_image = Mock(return_value=icon_image)
     monkeypatch.setattr(
@@ -838,7 +830,7 @@ def test_app_fetch_manifest_with_invalid_brand_data(
     # given
     app_manifest["brand"] = {"logo": {"default": "wrong-url.png"}}
     mocked_get_response = Mock()
-    mocked_get_response.json.return_value = app_manifest
+    mocked_get_response.content = json.dumps(app_manifest)
     monkeypatch.setattr(requests, "get", Mock(return_value=mocked_get_response))
 
     # when
@@ -852,5 +844,5 @@ def test_app_fetch_manifest_with_invalid_brand_data(
     content = get_graphql_content(response)
     errors = content["data"]["appFetchManifest"]["errors"]
     assert len(errors) == 1
-    assert errors[0]["field"] == "brand"
+    assert errors[0]["field"] == "brand.logo.default"
     assert errors[0]["code"] == AppErrorCode.INVALID_URL_FORMAT.name
