@@ -4,6 +4,7 @@ from json import JSONDecodeError
 from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar
 from urllib.parse import urlparse
 
+import opentracing
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.core.cache import cache
@@ -24,6 +25,8 @@ from ....payment.utils import (
     create_transaction_event_from_request_and_webhook_response,
     recalculate_refundable_for_checkout,
 )
+from ....public_log_drain.public_log_drain import LogDrainAttributes, LogLevel, LogType
+from ....public_log_drain.tasks import emit_public_log_task
 from ... import observability
 from ...const import WEBHOOK_CACHE_DEFAULT_TIMEOUT
 from ...event_types import WebhookEventSyncType
@@ -85,6 +88,104 @@ def handle_transaction_request_task(self, delivery_id, request_event_id):
     )
 
 
+def _emit_webhook_public_log_if_applicable(
+    delivery: "EventDelivery",
+    data: str,
+    webhook: "Webhook",
+):
+    if delivery.event_type not in (
+        WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES,
+        WebhookEventSyncType.ORDER_CALCULATE_TAXES,
+    ):
+        return
+    json_data = json.loads(data)
+    if delivery.event_type == WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES:
+        drain_attributes = LogDrainAttributes(
+            type=LogType.WEBHOOK_SENT.name,
+            level=LogLevel.INFO.name,
+            checkout_id=json_data["taxBase"]["sourceObject"]["id"],
+            version=json_data["version"],
+            message=f"Sending payload to {webhook.target_url}",
+        )
+    if delivery.event_type == WebhookEventSyncType.ORDER_CALCULATE_TAXES:
+        drain_attributes = LogDrainAttributes(
+            type=LogType.WEBHOOK_SENT.name,
+            level=LogLevel.INFO.name,
+            order_id=json_data["taxBase"]["sourceObject"]["id"],
+            version=json_data["version"],
+            message=f"Sending payload to {webhook.target_url}",
+        )
+    with opentracing.global_tracer().active_span as span:
+        emit_public_log_task.delay(
+            logger_name="webhook",
+            trace_id=getattr(span.context, "trace_id", 0),
+            span_id=getattr(span, "span_id", 0),
+            attributes=drain_attributes.__dict__,
+        )
+
+
+def _emit_webhook_failed_public_log(
+    delivery: "EventDelivery",
+    data: str,
+    webhook: "Webhook",
+    webhook_reponse: WebhookResponse,
+):
+    data = json.loads(data)
+    order_id = None
+    checkout_id = None
+    if delivery.event_type == WebhookEventSyncType.ORDER_CALCULATE_TAXES:
+        order_id = data["taxBase"]["sourceObject"]["id"]
+    if delivery.event_type == WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES:
+        checkout_id = data["taxBase"]["sourceObject"]["id"]
+    drain_attributes = LogDrainAttributes(
+        type=LogType.WEBHOOK_FAILED_4XX.name
+        if webhook_reponse.response_status_code >= 400  # type: ignore[operator]
+        and webhook_reponse.response_status_code < 500  # type: ignore[operator]
+        else LogType.WEBHOOK_FAILED_5XX.name,
+        level=LogLevel.ERROR.name,
+        order_id=order_id,
+        checkout_id=checkout_id,
+        version=data["version"],
+        message=f"Failed to send webhook to {webhook.target_url}",
+    )
+    with opentracing.global_tracer().active_span as span:
+        emit_public_log_task.delay(
+            logger_name="webhook",
+            trace_id=getattr(span.context, "trace_id", 0),
+            span_id=getattr(span, "span_id", 0),
+            attributes=drain_attributes.__dict__,
+        )
+
+
+def _emit_webhook_success_public_log(
+    delivery: "EventDelivery",
+    webhook: "Webhook",
+    data: str,
+):
+    data = json.loads(data)
+    order_id = None
+    checkout_id = None
+    if delivery.event_type == WebhookEventSyncType.ORDER_CALCULATE_TAXES:
+        order_id = data["taxBase"]["sourceObject"]["id"]
+    if delivery.event_type == WebhookEventSyncType.CHECKOUT_CALCULATE_TAXES:
+        checkout_id = data["taxBase"]["sourceObject"]["id"]
+    drain_attributes = LogDrainAttributes(
+        type=LogType.WEBHOOK_RESPONSE_RECEIVED.name,
+        level=LogLevel.INFO.name,
+        order_id=order_id,
+        checkout_id=checkout_id,
+        version=data.get("version", ""),
+        message=f"Received response from {webhook.target_url}",
+    )
+    with opentracing.global_tracer().active_span as span:
+        emit_public_log_task.delay(
+            logger_name="webhook",
+            trace_id=getattr(span.context, "trace_id", 0),
+            span_id=getattr(span, "span_id", 0),
+            attributes=drain_attributes.__dict__,
+        )
+
+
 def _send_webhook_request_sync(
     delivery, timeout=settings.WEBHOOK_SYNC_TIMEOUT, attempt=None
 ) -> tuple[WebhookResponse, Optional[dict[Any, Any]]]:
@@ -123,6 +224,7 @@ def _send_webhook_request_sync(
                 timeout=timeout,
                 custom_headers=webhook.custom_headers,
             )
+            _emit_webhook_public_log_if_applicable(delivery, data, webhook)
             response_data = json.loads(response.content)
 
     except JSONDecodeError as e:
@@ -134,6 +236,7 @@ def _send_webhook_request_sync(
             attempt.id,
         )
         response.status = EventDeliveryStatus.FAILED
+        _emit_webhook_failed_public_log(delivery, data, webhook, response)
     else:
         if response.status == EventDeliveryStatus.FAILED:
             logger.info(
@@ -143,6 +246,7 @@ def _send_webhook_request_sync(
                 response.content,
                 attempt.id,
             )
+            _emit_webhook_failed_public_log(delivery, data, webhook, response)
         if response.status == EventDeliveryStatus.SUCCESS:
             logger.debug(
                 "[Webhook] Success response from %r."
@@ -150,6 +254,7 @@ def _send_webhook_request_sync(
                 webhook.target_url,
                 attempt.id,
             )
+            _emit_webhook_success_public_log(delivery, webhook, data)
 
     attempt_update(attempt, response)
     delivery_update(delivery, response.status)

@@ -270,6 +270,7 @@ INSTALLED_APPS = [
     "saleor.site",
     "saleor.page",
     "saleor.payment",
+    "saleor.public_log_drain",
     "saleor.tax",
     "saleor.warehouse",
     "saleor.webhook",
@@ -937,3 +938,13 @@ ENABLE_LIMITING_WEBHOOKS_FOR_IDENTICAL_PAYLOADS = get_bool_from_env(
 # Transaction items limit for PaymentGatewayInitialize / TransactionInitialize.
 # That setting limits the allowed number of transaction items for single entity.
 TRANSACTION_ITEMS_LIMIT = 100
+
+
+# Public log drain configuration
+OTEL_TRANSPORTED_ENDPOINT = os.environ.get(
+    "OTEL_TRANSPORTED_ENDPOINT", "http://192.168.1.108:4318/v1/logs"
+)
+HTTP_TRANSPORTED_ENDPOINT = os.environ.get(
+    "HTTP_TRANSPORTED_ENDPOINT",
+    "https://saleor-app-logs-debugger.vercel.app/api/ingest",
+)
