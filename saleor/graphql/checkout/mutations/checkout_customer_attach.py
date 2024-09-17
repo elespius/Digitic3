@@ -18,6 +18,7 @@ from ...core.utils import WebhookEventInfo
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ...utils import get_user_or_app_from_context
 from ..types import Checkout
+from ..utils import save_checkout_if_not_deleted
 from .utils import get_checkout
 
 
@@ -115,7 +116,8 @@ class CheckoutCustomerAttach(BaseMutation):
 
         checkout.user = customer
         checkout.email = customer.email
-        checkout.save(update_fields=["email", "user", "last_change"])
+
+        save_checkout_if_not_deleted(checkout, ["email", "user", "last_change"])
         manager = get_plugin_manager_promise(info.context).get()
 
         call_checkout_event(

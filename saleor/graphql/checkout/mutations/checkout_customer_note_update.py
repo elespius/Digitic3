@@ -10,6 +10,7 @@ from ...core.types import CheckoutError
 from ...core.utils import WebhookEventInfo
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ..types import Checkout
+from ..utils import save_checkout_if_not_deleted
 
 
 class CheckoutCustomerNoteUpdate(BaseMutation):
@@ -51,7 +52,7 @@ class CheckoutCustomerNoteUpdate(BaseMutation):
         checkout = cls.get_node_or_error(info, id, only_type=Checkout)
         checkout.note = customer_note
         cls.clean_instance(info, checkout)
-        checkout.save(update_fields=["note", "last_change"])
+        save_checkout_if_not_deleted(checkout, ["note", "last_change"])
         manager = get_plugin_manager_promise(info.context).get()
         call_checkout_event(
             manager,

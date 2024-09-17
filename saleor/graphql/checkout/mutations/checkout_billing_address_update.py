@@ -3,7 +3,10 @@ import graphene
 from ....checkout import AddressType
 from ....checkout.actions import call_checkout_info_event
 from ....checkout.fetch import fetch_checkout_info, fetch_checkout_lines
-from ....checkout.utils import change_billing_address_in_checkout, invalidate_checkout
+from ....checkout.utils import (
+    change_billing_address_in_checkout,
+    invalidate_checkout,
+)
 from ....core.tracing import traced_atomic_transaction
 from ....webhook.event_types import WebhookEventAsyncType
 from ...account.types import AddressInput
@@ -15,6 +18,7 @@ from ...core.types import CheckoutError
 from ...core.utils import WebhookEventInfo
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ..types import Checkout
+from ..utils import save_checkout_if_not_deleted
 from .checkout_create import CheckoutAddressValidationRules
 from .checkout_shipping_address_update import CheckoutShippingAddressUpdate
 from .utils import get_checkout
@@ -103,9 +107,9 @@ class CheckoutBillingAddressUpdate(CheckoutShippingAddressUpdate):
                 recalculate_discount=False,
                 save=False,
             )
-            checkout.save(
-                update_fields=change_address_updated_fields
-                + invalidate_prices_updated_fields
+            save_checkout_if_not_deleted(
+                checkout,
+                change_address_updated_fields + invalidate_prices_updated_fields,
             )
 
         call_checkout_info_event(

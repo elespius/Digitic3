@@ -13,6 +13,7 @@ from ...core.types import CheckoutError
 from ...core.utils import WebhookEventInfo
 from ...plugins.dataloaders import get_plugin_manager_promise
 from ..types import Checkout
+from ..utils import save_checkout_if_not_deleted
 from .utils import get_checkout
 
 
@@ -78,7 +79,7 @@ class CheckoutEmailUpdate(BaseMutation):
 
         checkout.email = email
         cls.clean_instance(info, checkout)
-        checkout.save(update_fields=["email", "last_change"])
+        save_checkout_if_not_deleted(checkout, ["email", "last_change"])
         manager = get_plugin_manager_promise(info.context).get()
         call_checkout_event(
             manager,

@@ -36,6 +36,7 @@ from ...plugins.dataloaders import get_plugin_manager_promise
 from ...shipping.types import ShippingMethod
 from ...warehouse.types import Warehouse
 from ..types import Checkout
+from ..utils import save_checkout_if_not_deleted
 from .utils import ERROR_DOES_NOT_SHIP, clean_delivery_method, get_checkout
 
 
@@ -266,9 +267,10 @@ class CheckoutDeliveryMethodUpdate(BaseMutation):
         invalidate_prices_updated_fields = invalidate_checkout(
             checkout_info, lines, manager, save=False
         )
-        checkout.save(
-            update_fields=checkout_fields_to_update + invalidate_prices_updated_fields
+        save_checkout_if_not_deleted(
+            checkout, checkout_fields_to_update + invalidate_prices_updated_fields
         )
+
         get_or_create_checkout_metadata(checkout).save()
         call_checkout_info_event(
             manager,
@@ -321,7 +323,6 @@ class CheckoutDeliveryMethodUpdate(BaseMutation):
         delivery_method_id=None,
     ):
         checkout = get_checkout(cls, info, checkout_id=None, token=token, id=id)
-
         use_legacy_error_flow_for_checkout = (
             checkout.channel.use_legacy_error_flow_for_checkout
         )

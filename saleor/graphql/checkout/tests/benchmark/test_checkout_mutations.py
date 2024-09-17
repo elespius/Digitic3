@@ -1372,8 +1372,15 @@ def test_checkout_email_update(api_client, checkout_with_variants, count_queries
         "id": to_global_id_or_none(checkout_with_variants),
         "email": "newEmail@example.com",
     }
-    response = get_graphql_content(api_client.post_graphql(query, variables))
+    with patch(
+        "saleor.graphql.checkout.mutations."
+        "checkout_email_update.save_checkout_if_not_deleted"
+    ) as mocked_save:
+        response = get_graphql_content(api_client.post_graphql(query, variables))
     assert not response["data"]["checkoutEmailUpdate"]["errors"]
+    mocked_save.assert_called_once_with(
+        checkout_with_variants, ["email", "last_change"]
+    )
 
 
 @pytest.mark.django_db
