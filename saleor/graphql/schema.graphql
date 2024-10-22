@@ -14290,6 +14290,16 @@ type Mutation {
   ): GiftCardSettingsUpdate @doc(category: "Gift cards")
 
   """
+  Re-enable sync webhooks for provided app. 
+  
+  Requires one of the following permissions: MANAGE_SETTINGS.
+  """
+  reenableSyncWebhooks(
+    """The app ID to re-enable sync webhooks for."""
+    appId: ID!
+  ): ReenableSyncWebhooks @doc(category: "Shop")
+
+  """
   Manage shipping method's availability in channels. 
   
   Requires one of the following permissions: MANAGE_SHIPPING.
@@ -19784,6 +19794,20 @@ input TimePeriodInputType {
 
   """The type of the period."""
   type: TimePeriodTypeEnum!
+}
+
+"""
+Re-enable sync webhooks for provided app. 
+
+Requires one of the following permissions: MANAGE_SETTINGS.
+"""
+type ReenableSyncWebhooks @doc(category: "Shop") {
+  """
+  Re-enable sync webhooks for the app if circuit breaker was tripped. Can be used to manually re-enable sync webhooks for the app before the cooldown period ends.
+  """
+  app: App
+  shopErrors: [ShopError!]! @deprecated(reason: "This field will be removed in Saleor 4.0. Use `errors` field instead.")
+  errors: [ShopError!]!
 }
 
 """
