@@ -304,10 +304,12 @@ def _get_discounted_checkout_line_price(
     last_element = lines[-1].line.id == checkout_line_info.line.id
     if last_element:
         discount_amount = _calculate_discount_for_last_element(
-            lines_total_prices, total_price, total_discount_amount
+            lines_total_prices, total_price, total_discount_amount, currency
         )
     else:
-        discount_amount = line_total_price.amount / total_price * total_discount_amount
+        discount_amount = quantize_price(
+            line_total_price.amount / total_price * total_discount_amount, currency
+        )
     return max(
         (line_total_price - Money(discount_amount, currency)),
         zero_money(currency),
@@ -315,7 +317,7 @@ def _get_discounted_checkout_line_price(
 
 
 def _calculate_discount_for_last_element(
-    lines_total_prices, total_price, total_discount_amount
+    lines_total_prices, total_price, total_discount_amount, currency
 ):
     """Calculate the discount for last element.
 
@@ -325,7 +327,9 @@ def _calculate_discount_for_last_element(
     """
     sum_of_discounts_other_elements = sum(
         [
-            line_total_price / total_price * total_discount_amount
+            quantize_price(
+                line_total_price / total_price * total_discount_amount, currency
+            )
             for line_total_price in lines_total_prices
         ]
     )
