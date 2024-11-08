@@ -2549,7 +2549,7 @@ def test_checkout_with_voucher_complete_product_on_sale(
     )
     CheckoutLineDiscount.objects.create(
         line=checkout_line,
-        type=DiscountType.PROMOTION,
+        type=DiscountType.CATALOGUE_PROMOTION,
         value_type=DiscountValueType.FIXED,
         amount_value=reward_value,
         currency=channel.currency_code,
@@ -2849,7 +2849,7 @@ def test_checkout_complete_product_on_promotion(
     )
     CheckoutLineDiscount.objects.create(
         line=checkout_line,
-        type=DiscountType.PROMOTION,
+        type=DiscountType.CATALOGUE_PROMOTION,
         value_type=DiscountValueType.FIXED,
         amount_value=reward_value,
         currency=channel.currency_code,
@@ -2996,7 +2996,7 @@ def test_checkout_complete_multiple_rules_applied(
         [
             CheckoutLineDiscount(
                 line=checkout_line,
-                type=DiscountType.PROMOTION,
+                type=DiscountType.CATALOGUE_PROMOTION,
                 value_type=DiscountValueType.FIXED,
                 amount_value=reward_value_1,
                 currency=channel.currency_code,
@@ -3004,7 +3004,7 @@ def test_checkout_complete_multiple_rules_applied(
             ),
             CheckoutLineDiscount(
                 line=checkout_line,
-                type=DiscountType.PROMOTION,
+                type=DiscountType.CATALOGUE_PROMOTION,
                 value_type=DiscountValueType.FIXED,
                 amount_value=discount_amount_2,
                 currency=channel.currency_code,
