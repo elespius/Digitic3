@@ -174,6 +174,10 @@ def apply_order_discounts(
     assign_prices=True,
     database_connection_name: str = settings.DATABASE_CONNECTION_DEFAULT_NAME,
 ) -> tuple[Money, Money]:
+    from ..discount.utils.order import (
+        update_unit_discount_reason_with_order_level_discounts,
+    )
+
     """Calculate prices after applying order level discounts.
 
     Handles manual discounts, ENTIRE_ORDER vouchers and ORDER_PROMOTION.
@@ -198,6 +202,7 @@ def apply_order_discounts(
         )
         subtotal_discount = base_subtotal - subtotal
         apply_subtotal_discount_to_order_lines(lines, base_subtotal, subtotal_discount)
+        update_unit_discount_reason_with_order_level_discounts(lines, order)
 
     return subtotal, shipping_price
 
@@ -299,13 +304,19 @@ def assign_order_line_prices(line: "OrderLine", total_price: Money):
 
     quantity = line.quantity
     if quantity > 0:
-        unit_price = total_price / quantity
-        line.unit_price_net = unit_price
-        line.unit_price_gross = unit_price
+        unit_price = total_price.amount / quantity
+        line.unit_price_net_amount = unit_price
+        line.unit_price_gross_amount = unit_price
 
-        undiscounted_unit_price = line.undiscounted_total_price_net_amount / quantity
+        undiscounted_unit_price = line.undiscounted_base_unit_price_amount
         line.undiscounted_unit_price_net_amount = undiscounted_unit_price
         line.undiscounted_unit_price_gross_amount = undiscounted_unit_price
+
+        if not line.is_gift:
+            unit_discount = quantize_price(
+                undiscounted_unit_price - unit_price, currency
+            )
+            line.unit_discount_amount = unit_discount
 
 
 def assign_order_prices(

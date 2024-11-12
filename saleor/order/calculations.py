@@ -17,7 +17,10 @@ from ..core.taxes import (
     TaxError,
     zero_taxed_money,
 )
-from ..discount.utils.order import create_or_update_discount_objects_for_order
+from ..discount.utils.order import (
+    create_or_update_discount_objects_for_order,
+    update_unit_discount_reason_with_order_level_discounts,
+)
 from ..payment.model_helpers import get_subtotal
 from ..plugins import PLUGIN_IDENTIFIER_PREFIX
 from ..plugins.manager import PluginsManager
@@ -428,9 +431,18 @@ def _apply_tax_data(
         )
         undiscounted_subtotal += order_line.undiscounted_total_price
 
+        if not order_line.is_gift:
+            order_line.unit_discount_amount = quantize_price(
+                order_line.undiscounted_unit_price_net_amount
+                - order_line.unit_price_net_amount,
+                currency,
+            )
+
     order.subtotal = subtotal
     order.total = shipping_price + subtotal
     order.undiscounted_total = undiscounted_shipping_price + undiscounted_subtotal
+
+    update_unit_discount_reason_with_order_level_discounts(lines, order)
 
 
 def _remove_tax(order, lines):
@@ -607,6 +619,19 @@ def order_line_unit_discount_type(
     _, lines = fetch_order_prices_if_expired(order, manager, lines, force_update)
     order_line = _find_order_line(lines, order_line)
     return order_line.unit_discount_type
+
+
+def order_line_unit_discount_reason(
+    order: Order,
+    order_line: OrderLine,
+    manager: PluginsManager,
+    lines: Optional[Iterable[OrderLine]] = None,
+    force_update: bool = False,
+) -> Optional[str]:
+    """Return the line unit discount reason."""
+    _, lines = fetch_order_prices_if_expired(order, manager, lines, force_update)
+    order_line = _find_order_line(lines, order_line)
+    return order_line.unit_discount_reason
 
 
 def order_undiscounted_shipping(
